@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>送り状フォーム</title>
+<style>
+:root{
+  --bg:#f1f3f5; --card:#fff; --ink:#14202a; --ink2:#46525d; --mut:#78838d; --line:#dde2e7;
+  --acc:#1e6a9e; --acc-ink:#fff; --acc-soft:#dcebf5; --chip:#eceff2;
+  --warn:#b4531a; --warn-soft:#fbe9dc; --ok:#1f7a4d; --ok-soft:#dcf0e5;
+  --font:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  color-scheme:dark;
+  --bg:#12181d; --card:#1a232b; --ink:#e7ecf0; --ink2:#b3bec7; --mut:#88939c; --line:#2b3741;
+  --acc:#5fa3d0; --acc-ink:#0c1a24; --acc-soft:#1f3546; --chip:#25313b;
+  --warn:#e59a63; --warn-soft:#3a2a1c; --ok:#5fc48f; --ok-soft:#1c3427;
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--font);-webkit-text-size-adjust:100%;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+#app{max-width:560px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:12px}
+h1{font-size:18px;margin:4px 0 0}
+h2{font-size:14px;margin:0;font-weight:700;color:var(--ink2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label.lb{font-size:12.5px;color:var(--mut);font-weight:500;display:block;margin-bottom:2px}
+input[type=text],input[type=number],input[type=date],textarea{
+  width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:8px;padding:9px 10px;min-height:44px}
+textarea{min-height:76px;resize:vertical}
+input:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:14px;min-height:40px;padding:0 13px;border-radius:20px;border:1px solid var(--line);background:var(--chip);color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+.chip.sm{min-height:34px;padding:0 11px;font-size:13px}
+.btn{font:inherit;font-size:15px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn.ghost{border-color:transparent;color:var(--acc);background:transparent;padding:0 8px}
+.btn.del{color:var(--warn)}
+.btn:disabled{opacity:.5}
+.item{border-left:4px solid var(--acc);padding-left:12px;margin-left:-4px}
+.item-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item-h b{font-size:16px}
+.unit{display:flex;align-items:center;gap:6px}
+.unit span{color:var(--mut);font-size:14px;white-space:nowrap}
+.pv{font-size:12.5px;color:var(--mut);min-height:1.5em}
+.pv b{color:var(--ink);font-weight:500}
+.picked{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--acc-soft);border-radius:8px;padding:8px 10px}
+.list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.list button{font:inherit;text-align:left;background:var(--card);color:var(--ink);border:0;border-bottom:1px solid var(--line);padding:10px 12px;min-height:44px;cursor:pointer}
+.list button:last-child{border-bottom:0}
+.list small{display:block;color:var(--mut);font-size:12px}
+.err-box{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px}
+.ok-box{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:10px 12px;font-size:14px}
+.err{border-color:var(--warn)!important}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.bar-in .sum{font-size:13px;color:var(--mut);flex:1;min-width:0}
+.bar-in .btn{min-width:150px}
+.sheet{position:fixed;inset:0;background:var(--bg);overflow:auto;padding:14px 16px calc(90px + env(safe-area-inset-bottom,0px));z-index:5}
+.sheet-in{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+pre.txt{margin:0;white-space:pre-wrap;word-break:break-word;font:14px/1.7 var(--font);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.done{text-align:center;padding:24px 8px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.done .no{font-size:22px;font-weight:700;letter-spacing:.02em}
+.dev{background:var(--warn-soft);color:var(--warn);font-size:12.5px;padding:6px 10px;border-radius:8px}
+@media (max-width:360px){.bar-in .sum{display:none}.bar-in .btn{width:100%}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+/* ================= 設定（ここだけ書き換える） ================= */
+const CONFIG = {
+  LIFF_ID:   '2011833444-FjyiqU4V', // LINE Developers の LIFF ID（例 1234567890-AbCdEfGh）
+  API_URL:   'https://script.google.com/macros/s/AKfycbzPQgYf72SByhZ7XbM2ap_msMqqVZYv87krMO7PdI9hBsTxzQeFs8bsq8OSiHUcQeQ/exec',// GAS のウェブアプリURL（…/exec）
+  API_TOKEN: 'kb7Qx93mZt'  // Code.gs の CONFIG.TOKEN と同じ値
+};
+/* ============================================================== */
+
+const DEV = CONFIG.LIFF_ID === 'YOUR_LIFF_ID';   // LIFF_ID が未設定の間だけ、サンプルデータで動作確認できる
+const DRAFT_KEY = 'okuri_draft_v1', RECENT_KEY = 'okuri_recent_v1', MASTER_KEY = 'okuri_master_v1';
+
+const DEFAULT_OPTIONS = {
+  '産地': ['島根','鳥取','宍道湖','神西湖'],
+  '漁法': ['底引','定置','機械掻き','手掻き','巻網','釣','カゴ','潜り','かなぎ','桁引','刺網','養殖','冷凍'],
+  '運送会社': ['光浪運送（出雲）','光浪運送（境港）','光浪運送（出雲）→ムロオ（松江）','光浪運送（かにかに家）','光浪運送（米子）'],
+  '形態': ['バラ','バラ大','バラ小','L','M','S','2L','大','小'],
+  '定型メモ': ['箱売り','目方切り付け','緑紙敷数','特選品シール','島根パーチ・島根シール','冷凍']
+};
+const SAMPLE = {
+  partners: [
+    {company:'サンプル水産', label:'サンプル水産 営業部 山田様', unso:'光浪運送（出雲）', tanto:''},
+    {company:'テスト魚市', label:'テスト魚市 鈴木様', unso:'光浪運送（境港）', tanto:''},
+    {company:'見本商店', label:'見本商店 佐藤様', unso:'光浪運送（出雲）→ムロオ（松江）', tanto:''}
+  ],
+  products: [
+    ['シジミ','宍道湖','機械掻き'],['ノドグロ','島根','底引'],['サザエ','島根','潜り'],['アナゴ','島根','底引'],['スルメイカ','島根','底引'],
+    ['赤平','島根','定置'],['バトウ','島根','底引'],['ウチワハゲ','島根','定置'],['レンコダイ','島根','底引'],['小ヒラ','島根','定置'],
+    ['テナシイカ','島根','底引'],['アカヒラ','島根','定置'],['ササイカ','島根','底引'],['イサキ','島根','定置'],['白バイ','島根','カゴ'],['テイガイ','島根','カゴ']
+  ].map((p,i)=>({name:p[0],sanchi:p[1],gyoho:p[2],fav:i<12})),
+  options: DEFAULT_OPTIONS
+};
+
+/* ---------- 小さな道具 ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  for (const k in (attrs||{})){
+    const v = attrs[k];
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n[k] = v;
+    else if (v === true) n.setAttribute(k,'');
+    else if (v !== false && v != null) n.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => n.append(c instanceof Node ? c : document.createTextNode(c)));
+  return n;
+}
+const nf = s => String(s==null?'':s).normalize('NFKC').replace(/[ \t　]+/g,' ').trim();
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch(e){} };
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2));
+const pad = n => String(n).padStart(2,'0');
+function isoDate(off){ const d=new Date(); d.setDate(d.getDate()+off); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function fmtDate(iso){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||''); if(!m) return ''; const d=new Date(+m[1],+m[2]-1,+m[3]); return (d.getMonth()+1)+'/'+d.getDate()+'('+'日月火水木金土'[d.getDay()]+')'; }
+
+/* ---------- 状態 ---------- */
+let M = {partners:[], products:[], options:DEFAULT_OPTIONS};
+let S, me = {userId:'', name:''}, busy = false, cards = [];
+const newItem = (b={}) => ({sanchi:b.sanchi||'', name:b.name||'', gyoho:b.gyoho||'', form:'', irisu:'', juryo:'', kfree:'', qty:'', tanka:'', tedori:false, yen:''});
+const newState = () => ({partner:'', unso:'', chaku:isoDate(1), memo:'', items:[newItem()], clientId:uuid()});
+const opt = k => (M.options[k] && M.options[k].length ? M.options[k] : DEFAULT_OPTIONS[k]) || [];
+
+function kikaku(it){
+  const p=[]; if(it.form) p.push(it.form);
+  if(it.irisu) p.push(nf(it.irisu)+'入');
+  if(it.juryo) p.push(nf(it.juryo)+'k');
+  if(it.kfree) p.push(nf(it.kfree));
+  return p.join(' ');
+}
+function kingaku(it){ const y=nf(it.yen).replace(/,/g,''); return y ? (it.tedori?'手取':'')+(it.tanka||'')+y+'円' : ''; }
+function buildText(){
+  const CIRC='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳', SP='　';
+  const L=['◆相手先：'+S.partner,'','■内容'];
+  S.items.filter(i=>nf(i.name)).forEach((it,i)=>{
+    L.push((CIRC[i]||'('+(i+1)+')')+'産地：'+nf(it.sanchi)+SP+'品名：'+nf(it.name)+SP+'規格：'+kikaku(it)+SP+'数量：'+nf(it.qty)+SP+'金額：'+kingaku(it)+SP+'漁法：'+nf(it.gyoho));
+  });
+  L.push('','■運送会社：'+S.unso,'','■着日：'+fmtDate(S.chaku),'','■連絡事項：'+String(S.memo||'').normalize('NFKC').trim());
+  return L.join('\n');
+}
+
+/* ---------- 下書き ---------- */
+let saveT;
+function saveDraft(){ clearTimeout(saveT); saveT=setTimeout(()=>lsSet(DRAFT_KEY,{t:Date.now(),S}),400); }
+function loadDraft(){
+  const d=lsGet(DRAFT_KEY);
+  if(!d||!d.S||Date.now()-d.t>12*3600e3) return null;
+  const s=d.S; return (s.partner||s.items.some(i=>i.name||i.qty)) ? s : null;
+}
+
+/* ---------- 部品 ---------- */
+function chipGroup(values, get, set, cls){
+  const wrap=el('div',{class:'chips'});
+  const bs=values.map(v=>{ const b=el('button',{type:'button',class:'chip '+(cls||'')},v);
+    b.onclick=()=>{ set(get()===v?'':v); sync(); saveDraft(); }; wrap.append(b); return [v,b]; });
+  function sync(){ bs.forEach(([v,b])=>b.setAttribute('aria-pressed', get()===v)); }
+  sync(); return {node:wrap, sync};
+}
+
+/* ---------- 相手先 ---------- */
+function buildPartner(box){
+  box.innerHTML='';
+  const picked=el('div',{class:'picked'}), q=el('input',{type:'text',id:'partnerQ',placeholder:'会社名・担当者名で検索',autocomplete:'off'});
+  const list=el('div',{class:'list',hidden:true}), recent=el('div',{class:'chips'});
+  const searchBox=el('div',{style:'display:flex;flex-direction:column;gap:8px'},q,list,recent);
+
+  function choose(label, unso){
+    S.partner=label; if(unso && !S.unso) S.unso=unso; else if(unso) S.unso=unso;
+    const r=(lsGet(RECENT_KEY)||[]).filter(x=>x.label!==label); r.unshift({label,unso}); lsSet(RECENT_KEY,r.slice(0,6));
+    q.value=''; render_(); syncAll(); saveDraft();
+  }
+  function render_(){
+    picked.innerHTML='';
+    if(S.partner){
+      picked.append(el('div',{},el('div',{style:'font-size:12px;color:var(--mut)'},'◆相手先'),el('b',{},S.partner)),
+        el('button',{type:'button',class:'btn ghost',onclick:()=>{S.partner='';render_();saveDraft();q.focus();}},'変更'));
+    }
+    picked.hidden=!S.partner; searchBox.hidden=!!S.partner;
+    recent.innerHTML='';
+    if(!S.partner){ (lsGet(RECENT_KEY)||[]).forEach(r=>recent.append(el('button',{type:'button',class:'chip sm',onclick:()=>choose(r.label,r.unso)},r.label))); }
+  }
+  q.oninput=()=>{
+    const t=nf(q.value).toLowerCase(); list.innerHTML='';
+    if(!t){ list.hidden=true; return; }
+    const hit=M.partners.filter(p=>(p.label+p.company+p.tanto).normalize('NFKC').toLowerCase().includes(t)).slice(0,8);
+    hit.forEach(p=>list.append(el('button',{type:'button',onclick:()=>choose(p.label,p.unso)},p.label,p.unso?el('small',{},p.unso):'')));
+    list.append(el('button',{type:'button',onclick:()=>choose(q.value.trim(),'')},el('small',{},'一覧にない場合'),'「'+q.value.trim()+'」をそのまま使う'));
+    list.hidden=false;
+  };
+  box.append(picked,searchBox); render_();
+  return {sync:render_};
+}
+
+/* ---------- 品目カード ---------- */
+function makeCard(it, idx){
+  const card={};
+  const pv=el('div',{class:'pv'});
+  const name=el('input',{type:'text',id:'name'+idx,placeholder:'品名を入力、または下から選ぶ',autocomplete:'off',enterkeyhint:'done'});
+  const sug=el('div',{class:'chips'});
+  const sanchi=chipGroup(opt('産地'),()=>it.sanchi,v=>{it.sanchi=v;other.value='';});
+  const other=el('input',{type:'text',placeholder:'その他の産地（例：山口）',autocomplete:'off',style:'margin-top:6px'});
+  const gyoho=chipGroup(opt('漁法'),()=>it.gyoho,v=>{it.gyoho=v;},'sm');
+  const form=chipGroup(opt('形態'),()=>it.form,v=>{it.form=v;pvSync();},'sm');
+  const irisu=el('input',{type:'number',inputmode:'numeric',min:'0',placeholder:'例 8'});
+  const juryo=el('input',{type:'number',inputmode:'decimal',step:'any',min:'0',placeholder:'例 5'});
+  const kfree=el('input',{type:'text',placeholder:'その他（例：1k×20 / 8番手 / 3立）',autocomplete:'off'});
+  const qty=el('input',{type:'number',inputmode:'numeric',min:'0',placeholder:'数量'});
+  const qq=el('div',{class:'chips'}); ['1','2','3','4','5','10'].forEach(v=>{
+    const b=el('button',{type:'button',class:'chip sm'},v); b.onclick=()=>{it.qty=it.qty===v?'':v;syncQty();saveDraft();}; qq.append(b); });
+  const yen=el('input',{type:'number',inputmode:'numeric',min:'0',placeholder:'金額（未定なら空欄）'});
+  const tanka=chipGroup(['k','c/s','浜値箱'],()=>it.tanka,v=>{it.tanka=v;pvSync();},'sm');
+  const tedori=el('input',{type:'checkbox',id:'ted'+idx});
+
+  function pvSync(){ const k=kikaku(it), g=kingaku(it); pv.replaceChildren(el('span',{},'規格：'),el('b',{},k||'—'),'　',el('span',{},'金額：'),el('b',{},g||'—')); }
+  function syncQty(){ [...qq.children].forEach(b=>b.setAttribute('aria-pressed', it.qty===b.textContent)); qty.value=it.qty; }
+  function suggest(){
+    const t=nf(name.value).toLowerCase(); sug.innerHTML='';
+    const pool=t ? M.products.filter(p=>p.name.normalize('NFKC').toLowerCase().includes(t)) : M.products.filter(p=>p.fav);
+    pool.slice(0,t?8:14).forEach(p=>{ const b=el('button',{type:'button',class:'chip sm','aria-pressed':String(it.name===p.name)},p.name);
+      b.onclick=()=>{ it.name=p.name; if(p.sanchi) it.sanchi=p.sanchi; if(p.gyoho) it.gyoho=p.gyoho; card.sync(); saveDraft(); }; sug.append(b); });
+  }
+  name.oninput=()=>{it.name=name.value; suggest(); saveDraft();};
+  other.oninput=()=>{it.sanchi=nf(other.value); sanchi.sync(); saveDraft();};
+  irisu.oninput=()=>{it.irisu=irisu.value;pvSync();saveDraft();};
+  juryo.oninput=()=>{it.juryo=juryo.value;pvSync();saveDraft();};
+  kfree.oninput=()=>{it.kfree=kfree.value;pvSync();saveDraft();};
+  qty.oninput=()=>{it.qty=qty.value;syncQty();saveDraft();};
+  yen.oninput=()=>{it.yen=yen.value;pvSync();saveDraft();};
+  tedori.onchange=()=>{it.tedori=tedori.checked;pvSync();saveDraft();};
+
+  const title=el('b',{}),
+    same=el('button',{type:'button',class:'btn ghost',onclick:()=>{ S.items.splice(idx+1,0,newItem(it)); renderItems(); saveDraft(); focusItem(idx+1); }},'同じ品名で追加'),
+    del=el('button',{type:'button',class:'btn ghost del',onclick:()=>{ if(S.items.length===1){S.items[0]=newItem();} else {S.items.splice(idx,1);} renderItems(); saveDraft(); }},'削除');
+
+  card.node=el('div',{class:'card item'},
+    el('div',{class:'item-h'},title,el('div',{class:'row',style:'gap:0'},same,del)),
+    el('div',{},el('label',{class:'lb',for:'name'+idx},'品名'),name,el('div',{style:'margin-top:6px'},sug)),
+    el('div',{},el('label',{class:'lb'},'産地'),sanchi.node,other),
+    el('div',{},el('label',{class:'lb'},'規格'),form.node,
+      el('div',{class:'row',style:'margin-top:6px;flex-wrap:nowrap'},
+        el('div',{class:'unit',style:'flex:1'},irisu,el('span',{},'入')),
+        el('div',{class:'unit',style:'flex:1'},juryo,el('span',{},'k'))),
+      el('div',{style:'margin-top:6px'},kfree)),
+    el('div',{},el('label',{class:'lb'},'数量（ケース）'),el('div',{class:'row',style:'flex-wrap:nowrap'},el('div',{style:'width:110px;flex:none'},qty),qq)),
+    el('div',{},el('label',{class:'lb'},'金額（任意）'),tanka.node,
+      el('div',{class:'row',style:'margin-top:6px;flex-wrap:nowrap'},el('div',{class:'unit',style:'flex:1'},yen,el('span',{},'円')),
+        el('label',{style:'display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:14px'},tedori,'手取'))),
+    el('div',{},el('label',{class:'lb'},'漁法'),gyoho.node),
+    pv);
+
+  card.sync=()=>{ title.textContent=(('①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳')[idx]||'('+(idx+1)+')')+' 品目';
+    name.value=it.name; suggest(); sanchi.sync(); other.value=opt('産地').includes(it.sanchi)?'':it.sanchi;
+    gyoho.sync(); form.sync(); irisu.value=it.irisu; juryo.value=it.juryo; kfree.value=it.kfree; syncQty();
+    yen.value=it.yen; tanka.sync(); tedori.checked=it.tedori; pvSync(); };
+  card.it=it; card.sync(); return card;
+}
+function focusItem(i){ const c=cards[i]; if(c){ c.node.scrollIntoView({behavior:'smooth',block:'start'}); } }
+function renderItems(){
+  const box=$('#items'); box.innerHTML=''; cards=S.items.map((it,i)=>makeCard(it,i));
+  cards.forEach(c=>box.append(c.node)); updateSum();
+}
+function updateSum(){ const n=S.items.filter(i=>nf(i.name)).length; const s=$('#sum'); if(s) s.textContent='品目 '+n+' 件'; }
+
+/* ---------- 画面 ---------- */
+let partnerUI, unsoUI;
+function syncAll(){ if(unsoUI) unsoUI.sync(); const c=$('#chakuPv'); if(c) c.textContent=fmtDate(S.chaku); updateSum(); }
+function buildForm(){
+  const app=$('#app'); app.innerHTML='';
+  if(DEV) app.append(el('div',{class:'dev'},'動作確認モードです（LIFF・GASが未設定のため、サンプルデータで動きます。送信しても保存されません）'));
+  app.append(el('h1',{},'送り状フォーム'));
+  const errBox=el('div',{id:'err',class:'err-box',hidden:true});
+  app.append(errBox);
+
+  const pbox=el('div'); const partnerCard=el('div',{class:'card',id:'partnerCard'},el('h2',{},'相手先'),pbox); app.append(partnerCard);
+  partnerUI=buildPartner(pbox);
+
+  unsoUI=chipGroup(opt('運送会社'),()=>S.unso,v=>{S.unso=v;});
+  app.append(el('div',{class:'card',id:'unsoCard'},el('h2',{},'運送会社'),unsoUI.node));
+
+  const chaku=el('input',{type:'date',id:'chaku'}); chaku.value=S.chaku;
+  chaku.oninput=()=>{S.chaku=chaku.value;$('#chakuPv').textContent=fmtDate(S.chaku);saveDraft();};
+  const quick=el('div',{class:'chips'});
+  [['今日',0],['明日',1],['明後日',2]].forEach(([t,o])=>quick.append(el('button',{type:'button',class:'chip sm',onclick:()=>{S.chaku=isoDate(o);chaku.value=S.chaku;$('#chakuPv').textContent=fmtDate(S.chaku);saveDraft();}},t)));
+  app.append(el('div',{class:'card',id:'chakuCard'},el('h2',{},'着日'),el('div',{class:'row',style:'flex-wrap:nowrap'},el('div',{style:'flex:1'},chaku),el('b',{id:'chakuPv',style:'min-width:74px;text-align:right'},fmtDate(S.chaku))),quick));
+
+  app.append(el('h2',{style:'margin-top:4px'},'内容'),el('div',{id:'items',style:'display:flex;flex-direction:column;gap:12px'}));
+  app.append(el('button',{type:'button',class:'btn',id:'add',onclick:()=>{ const last=S.items[S.items.length-1]; S.items.push(newItem({sanchi:last&&last.sanchi})); renderItems(); saveDraft(); focusItem(S.items.length-1); }},'＋ 品目を追加'));
+
+  const memo=el('textarea',{id:'memo',placeholder:'連絡事項があれば入力'}); memo.value=S.memo; memo.oninput=()=>{S.memo=memo.value;saveDraft();};
+  const memoChips=el('div',{class:'chips'}); opt('定型メモ').forEach(t=>memoChips.append(el('button',{type:'button',class:'chip sm',onclick:()=>{
+    const cur=memo.value.trim(); if(cur.split(/[\n、,]/).map(s=>s.trim()).includes(t)) return; memo.value=cur?cur+'、'+t:t; S.memo=memo.value; saveDraft(); }},t)));
+  app.append(el('div',{class:'card'},el('h2',{},'連絡事項'),memo,memoChips));
+
+  app.append(el('div',{class:'bar'},el('div',{class:'bar-in'},el('div',{class:'sum',id:'sum'}),el('button',{type:'button',class:'btn pri',id:'go',onclick:onConfirm},'内容を確認する'))));
+  renderItems(); syncAll();
+}
+
+function showErr(msg, target){
+  const b=$('#err'); if(b){ b.textContent=msg; b.hidden=false; }
+  const t=target?$(target):b; if(t){ t.classList.add('err'); setTimeout(()=>t.classList.remove('err'),2500); t.scrollIntoView({behavior:'smooth',block:'center'}); }
+}
+function validate(){
+  const b=$('#err'); b.hidden=true;
+  if(!S.partner) return showErr('相手先を選んでください。','#partnerCard'),false;
+  if(!S.unso) return showErr('運送会社を選んでください。','#unsoCard'),false;
+  if(!S.chaku) return showErr('着日を選んでください。','#chakuCard'),false;
+  const its=S.items.map((it,i)=>[it,i]).filter(([it])=>nf(it.name));
+  if(!its.length) return showErr('品名を入力してください。','#items'),false;
+  for(const [it,i] of its){ if(!nf(it.qty)) return showErr((i+1)+'番目の品目の数量を入力してください。','#items > :nth-child('+(i+1)+')'),false; }
+  return true;
+}
+
+function onConfirm(){
+  if(!validate()) return;
+  const noKikaku=S.items.filter(i=>nf(i.name)&&!kikaku(i)).length;
+  const sheet=el('div',{class:'sheet',id:'sheet'});
+  sheet.append(el('div',{class:'sheet-in'},
+    el('h1',{},'この内容で送信します'),
+    noKikaku?el('div',{class:'err-box'},'規格が空の品目が '+noKikaku+' 件あります。このまま送っても構いません。'):'',
+    el('pre',{class:'txt'},buildText()),
+    el('div',{id:'sendErr',class:'err-box',hidden:true})),
+    el('div',{class:'bar'},el('div',{class:'bar-in'},el('button',{type:'button',class:'btn',onclick:()=>sheet.remove()},'戻る'),el('button',{type:'button',class:'btn pri',id:'send',style:'flex:1',onclick:onSend},'送信する'))));
+  document.body.append(sheet); sheet.scrollTop=0;
+}
+
+/* ---------- 送信 ---------- */
+async function onSend(){
+  if(busy) return; busy=true;
+  const btn=$('#send'), eb=$('#sendErr'); btn.disabled=true; btn.textContent='送信中…'; eb.hidden=true;
+  try{
+    const payload={ token:CONFIG.API_TOKEN, clientId:S.clientId, partner:S.partner, unso:S.unso, chakuDate:S.chaku, memo:S.memo,
+      items:S.items.filter(i=>nf(i.name)).map(i=>({sanchi:i.sanchi,name:i.name,kikaku:kikaku(i),qty:i.qty,kingaku:kingaku(i),gyoho:i.gyoho})),
+      accessToken: DEV?'':liff.getAccessToken(), userId:me.userId, userName:me.name };
+    let res;
+    if(DEV){ await new Promise(r=>setTimeout(r,500)); res={ok:true,no:'DEV-001',text:buildText()}; }
+    else{
+      const r=await fetch(CONFIG.API_URL,{method:'POST',body:JSON.stringify(payload),redirect:'follow'});   // text/plain で送る（事前確認リクエストを避けるため）
+      res=await r.json();
+    }
+    if(!res.ok) throw new Error(res.error||'送信に失敗しました');
+    let posted=false;
+    if(!DEV){ try{ await liff.sendMessages([{type:'text',text:'【受付No.'+res.no+'】\n'+res.text}]); posted=true; }catch(e){ posted=false; } }
+    lsDel(DRAFT_KEY); showDone(res,posted);
+  }catch(e){
+    eb.textContent=(e instanceof SyntaxError)?'受付結果を確認できませんでした。もう一度「送信する」を押してください（二重登録にはなりません）。'
+      :(e&&e.message&&e.message!=='Failed to fetch'?e.message:'通信に失敗しました。電波の良い場所で、もう一度「送信する」を押してください。（入力内容は残っています）');
+    eb.hidden=false; btn.disabled=false; btn.textContent='送信する'; busy=false;
+  }
+}
+function showDone(res,posted){
+  busy=false; const s=$('#sheet'); if(s) s.remove(); const app=$('#app'); app.innerHTML='';
+  app.append(el('div',{class:'done'},
+    el('div',{style:'width:56px;height:56px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:30px'},'✓'),
+    el('div',{},'受け付けました'), el('div',{class:'no'},'No. '+res.no),
+    posted||DEV?'':el('div',{class:'err-box'},'受付は完了していますが、トークへの投稿はできませんでした。'),
+    el('pre',{class:'txt',style:'width:100%;text-align:left'},res.text),
+    el('div',{class:'row',style:'justify-content:center'},
+      el('button',{type:'button',class:'btn pri',onclick:()=>{S=newState();buildForm();window.scrollTo(0,0);}},'続けて入力する'),
+      (!DEV&&liff.isInClient&&liff.isInClient())?el('button',{type:'button',class:'btn',onclick:()=>liff.closeWindow()},'閉じる'):'')));
+  window.scrollTo(0,0);
+}
+
+/* ---------- 起動 ---------- */
+async function fetchMasters(){
+  const r=await fetch(CONFIG.API_URL+'?t='+encodeURIComponent(CONFIG.API_TOKEN),{redirect:'follow'});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'master'); return j.data;
+}
+async function boot(){
+  $('#app').append(el('div',{class:'pv'},'読み込み中…'));
+  try{
+    if(DEV){ M=SAMPLE; }
+    else{
+      if(!window.liff) throw new Error('LINEの部品を読み込めませんでした');
+      await liff.init({liffId:CONFIG.LIFF_ID});
+      if(!liff.isLoggedIn()){ liff.login(); return; }
+      try{ const p=await liff.getProfile(); me={userId:p.userId,name:p.displayName}; }catch(e){}
+      try{ M=await fetchMasters(); lsSet(MASTER_KEY,M); }
+      catch(e){ const c=lsGet(MASTER_KEY); if(c) M=c; }   // 通信できないときは前回のマスタを使う
+    }
+    M.options=Object.assign({},DEFAULT_OPTIONS,M.options||{});
+    S=newState();
+    const d=loadDraft(); if(d){ S=d; }
+    buildForm();
+    if(d){ const b=el('div',{class:'ok-box'},'前回の入力の続きを表示しています。',el('button',{type:'button',class:'btn ghost',onclick:()=>{lsDel(DRAFT_KEY);S=newState();buildForm();}},'破棄して新規'));
+      $('#app').insertBefore(b,$('#app').children[DEV?2:1]); }
+  }catch(e){
+    $('#app').innerHTML=''; $('#app').append(el('div',{class:'err-box'},'フォームを開けませんでした。LINEを開き直してください。（'+(e&&e.message||e)+'）'));
+  }
+}
+boot();
+</script>
+</body>
+</html>
